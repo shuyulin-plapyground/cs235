@@ -48,15 +48,17 @@ int main() {
     s.pop();
     show("after one pop", s);
     label("pop order");
+    
     while (!s.empty()) {
         std::cout << s.top() << " ";
         s.pop();
     }
+    
     std::cout << "\n";
     show("now", s);
     label("pop() on empty");
     std::cout << (s.pop() ? "true" : "false") << "\n";
-
+   
     std::cout << "\n=== Task C: enqueue ===\n";
     Queue q;
     show("new queue", q);
@@ -105,6 +107,7 @@ int main() {
     reverseQueue(r);
     show("after reverse", r);
     std::cout << "  (unchanged above means Task F is still empty -- that is fine)\n";
+
 
     return 0;
 }

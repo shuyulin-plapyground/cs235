@@ -60,7 +60,7 @@ std::string Queue::toString() const {
 // points at itself. The old queue is still reachable from front_, but it
 // is no longer connected to back_.
 bool Queue::enqueue(int value) {
-    Node* addback = new Node(value,nullptr);
+    Node* addback = new Node{value,nullptr};
     if(size_==0){
         front_ = addback;
         back_ = addback;
@@ -69,7 +69,7 @@ bool Queue::enqueue(int value) {
         back_ = addback;
         
     }
-    size++;
+    size_++;
     return true;
 }
 
@@ -91,8 +91,8 @@ bool Queue::dequeue() {
     Node* todelete = front_;
         front_=front_->next;
         delete todelete;
-        size--;
-    if(size==0){
+        size_--;
+    if(size_==0){
         back_=nullptr;
         front_=nullptr;
     }
@@ -110,12 +110,20 @@ int Queue::front() const {
 }
 
 // ================================================================== Task F
-// OPTIONAL PRACTICE -- not graded, and you may leave it exactly as it is.
-//
-// reverseQueue(q): reverse q in place using a Stack.
-//   dequeue everything from q, pushing each item onto a stack;
-//   then pop everything off the stack, enqueueing each item back into q.
+// OPTIONAL PRACTICE -- 
+// queue q = 10,20,30,40,50
+//we storage in to stack from front --> end 
+//stack = 50,40,30,20,10 frist in last out 
+// push it back to queue = 50->40->30->20->10 first in first out
+// since we are not created an new pointer . we just creat a local object , since we finish the function the temp will get destory.
 void reverseQueue(Queue& q) {
-    // TODO (optional): your code here
-    (void)q;   // silences an unused-parameter warning while this is empty
-}
+    Stack temp;
+    while(!q.empty()){
+       temp.push(q.front());// this concept is not correct since stack is an structure 
+       q.dequeue();
+    }
+    while(!temp.empty()){
+        q.enqueue(temp.top());
+        temp.pop();
+    }
+} 

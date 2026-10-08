@@ -5,6 +5,7 @@
 // Implement Task A, Task B and Task E below. Do not modify Stack.hpp.
 
 #include "Stack.hpp"
+#include<iostream>
 
 #include <sstream>
 
@@ -51,9 +52,10 @@ std::string Stack::toString() const {
 // Always returns true. (A linked stack cannot be full; push returns bool only
 // so that this class and an array-based stack share one interface.)
 bool Stack::push(int value) {
-    Node* newData = new Node(value,head_);
+    Node* newData = new Node{value,head_};
     head_ = newData;
     // TODO: your code here
+    size_++;
     return true;
 }
 
@@ -69,7 +71,10 @@ bool Stack::pop() {
     }
     Node* toDelete = head_;
     head_= head_->next;
+    
     delete toDelete;
+    toDelete = nullptr;
+    size_--;
     return true;
 }
 
@@ -83,17 +88,40 @@ int Stack::top() const {
 
 // ================================================================== Task E
 // balanced(text): see the comment in Stack.hpp for the exact rules.
-//
-// The shape of the algorithm:
-//   for each character in text
-//       if it opens  -> push it and move on
-//       if it closes -> if the stack is empty, there is nothing to match: fail
-//                       otherwise look at top(), pop(), and check the pair
-//       anything else -> ignore it
-//   at the end, the string is balanced only if the stack is empty
-//
-// Careful: check empty() BEFORE calling top(). top() has a precondition.
+// creat an stack for contain the text[i] by the loop
+// storage the close prenthesis into stack (infor from our side: how many close prentesis from text)
+
+// check the string (if close > open ){size!=0 return false}
+//                  (if close <open ){if(!s.empty())and still get into the check open prenthesis loop , return false}
+// else they are equal  then return true.
 bool balanced(const std::string& text) {
-    // TODO: your code here
-    return false;
+    Stack s;
+    for(std::size_t i=0; i<text.size();++i){
+        if(text[i]== '('|| text[i]=='{'||text[i]=='['){
+            s.push(text[i]); 
+        }
+        
+        if(text[i]==')'||text[i]=='}'||text[i]==']'){
+            if(s.empty()){
+                return false;
+            }
+            if(s.top() == '('&& text[i] == ')'){
+                s.pop();
+            }
+            else if(s.top() == '['&& text[i] == ']'){
+                s.pop();
+            }
+            else if(s.top() == '{'&& text[i] == '}'){
+                s.pop();
+            }
+        }
+        
+        
+    }
+    if(s.size()==0){
+        return true;
+    }else{
+        return false;
+    }
+
 }
