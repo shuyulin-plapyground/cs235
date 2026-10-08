@@ -94,6 +94,30 @@ int Stack::top() const {
 //
 // Careful: check empty() BEFORE calling top(). top() has a precondition.
 bool balanced(const std::string& text) {
-    // TODO: your code here
-    return false;
+    for(int i=0; i<text.size();i++){
+        if(text[i]== '('|| text[i]=='{'||text[i]=='['){
+            push(text[i]); 
+        }
+        
+        if(!empty() && text[i]==')'||text[i]=='}'||text[i]==']')
+            if(top() == char'('&& arr[i] == char ')'){
+                pop();
+            }
+            if(top() == char'['&& arr[i] == char ']'){
+                pop();
+            }
+            if(top() == char'{'&& arr[i] == char '}'){
+                pop();
+            }
+        
+        
+    }
+    if(size()==0){
+        return true;
+    }else{
+        return false;
+    }
+
+
+
 }
