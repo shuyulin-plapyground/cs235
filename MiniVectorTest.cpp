@@ -1,261 +1,184 @@
-// File name: MiniVectorTest.cpp  (PROVIDED -- do not modify, do not submit)
-//
-// CSCI 235 -- Project 1A: MiniVector (int)
-// Hunter College, CUNY | Fall 2026
-//
-// A self-check harness covering Tasks A-D, one task per run. Passing every
-// test in a task group is necessary but not sufficient for full credit --
-// the Gradescope autograder checks additional cases (different numbers,
-// more edge cases) that you have not seen.
-//
-// Tests may fail or terminate with a runtime memory error until the
-// corresponding and prerequisite functions in your MiniVector.cpp are
-// implemented -- that is expected, not a bug in this file. Run only the
-// task group you are currently implementing, and complete the tasks in
-// order.
-//
-// Compile:
-//   g++ -std=c++17 -Wall -Wextra -o MiniVectorTest MiniVectorTest.cpp MiniVector.cpp
-// Run one task at a time:
-//   ./MiniVectorTest A   # constructors and destructor
-//   ./MiniVectorTest B   # push_back, reserve, and growth
-//   ./MiniVectorTest C   # pop_back, clear, and at
-//   ./MiniVectorTest D   # Rule of Three
+//File name: MiniVectorTest.cpp, template version
+//name:
+//email:
 
-#include "MiniVector.hpp"
+// command to compile:
+// g++ -std=c++17 -Wall -Wextra -pedantic MiniVectorTest.cpp Rectangle.cpp -o MiniVectorTest
 #include <iostream>
-#include <string>
+#include <cassert>
 #include <stdexcept>
+#include <string>
+#include "MiniVector.hpp"
+#include "Rectangle.hpp"
 
-static int g_pass = 0;
-static int g_total = 0;
+int main() {
+  MiniVector<int> v;
 
-template <typename T>
-static void chk(const std::string& label, T actual, T expected) {
-    ++g_total;
-    if (actual == expected) { ++g_pass; return; }
-    std::cout << "FAIL: " << label << " -- expected " << expected
-              << ", got " << actual << "\n";
-}
+  v.push_back(3);
+  v.push_back(2);
+  v.push_back(1);
+  v.push_back(-1);
+  v.push_back(6);
+  std::cout << v.size() << '\n';
+  std::cout << v.capacity() << '\n';
+  //std::cout << v[0] << '\n';
 
-template <typename F>
-static void chk_throws_out_of_range(const std::string& label, F&& fn) {
-    ++g_total;
-    try {
-        fn();
-        std::cout << "FAIL: " << label
-                  << " -- expected std::out_of_range, but nothing was thrown\n";
-    } catch (const std::out_of_range&) {
-        ++g_pass;
-    } catch (...) {
-        std::cout << "FAIL: " << label
-                  << " -- threw, but not std::out_of_range\n";
-    }
-}
+  v[0] = 1; // call int& operator[](size_t pos) method
+  std::cout << v.at(0) << '\n';
+  v.at(0) = 7;
 
-static void print_result(const std::string& taskLabel) {
-    if (g_pass == g_total)
-        std::cout << "Task " << taskLabel << ": all " << g_total << " tests passed.\n";
-    else
-        std::cout << "Task " << taskLabel << ": " << g_pass << "/" << g_total
-                  << " tests passed.\n";
-}
+  v.clear();
+  std::cout << "\nCall v.clear(); capacity and size of v are as follows.\n";
+  std::cout << "capacity: " << v.capacity() << '\n';
+  std::cout << "size: " << v.size() << '\n';
 
-// ── Task A: Construction and destruction (9 tests) ───────────────────────────────
-static void testTaskA() {
-    MiniVector v;
-    chk<std::size_t>("default ctor: size()", v.size(), 0);
-    chk<std::size_t>("default ctor: capacity()", v.capacity(), 2);
-    chk<bool>("default ctor: empty()", v.empty(), true);
+  v.reserve(20);
+  v.push_back(3);
+  std::cout << "\nThen call v.reserve(20); capacity and size of v are as follows.\n";
+  std::cout << "capacity: " << v.capacity() << '\n';
+  std::cout << "size: " << v.size() << '\n';
 
-    MiniVector w(5);
-    chk<std::size_t>("count ctor(5): size()", w.size(), 5);
-    chk<std::size_t>("count ctor(5): capacity()", w.capacity(), 5);
-    chk<int>("count ctor(5): w[0] == 0", w[0], 0);
-    chk<int>("count ctor(5): w[4] == 0", w[4], 0);
+  MiniVector<int> v2(10);
+  MiniVector<int> v3 = v2;
+  std::cout << "\nRun MiniVector v2(10); Set v3 to be v2. Then change ith element of v3 to be i + 1, where i >= 0\n";
 
-    MiniVector z(0);
-    chk<std::size_t>("count ctor(0): capacity() == 2", z.capacity(), 2);
-    chk<bool>("count ctor(0): empty()", z.empty(), true);
+  for (std::size_t i = 0; i < v3.size(); ++i) {
+    v3[i] = static_cast<int>(i + 1);
+    std::cout << v3[i] << " ";
+  }
+  std::cout << "\n\n";
 
-    print_result("A");
-}
+  std::cout << "Contents of v2 are not changed:\n";
+  for (std::size_t i = 0; i < v2.size(); ++i) {
+    std::cout << v2[i] << " ";
+  }
+  std::cout << "\n\n";
 
-// ── Task B: Growth and capacity (30 tests) ──────────────────────────────────
-static void testTaskB() {
-    MiniVector v;
-    std::size_t expectedCapacities[] = {2, 2, 4, 4, 8, 8, 8, 8};
-    for (int i = 0; i < 8; ++i) {
-        v.push_back((i + 1) * 10);
-        chk<std::size_t>("push_back #" + std::to_string(i + 1) + ": size()",
-                    v.size(), static_cast<std::size_t>(i + 1));
-        chk<std::size_t>("push_back #" + std::to_string(i + 1) + ": capacity()",
-                    v.capacity(), expectedCapacities[i]);
-    }
-    for (int i = 0; i < 8; ++i) {
-        chk<int>("push_back: v[" + std::to_string(i) + "] preserved",
-                 v[i], (i + 1) * 10);
-    }
+  v2.clear();
+  std::cout << "Call clear method for v2.\n";
+  MiniVector<int> v4 = v2;
 
-    // reserve(): growing capacity manually, elements preserved (4)
-    MiniVector r;
-    r.push_back(1);
-    r.push_back(2);
-    r.reserve(10);
-    chk<std::size_t>("reserve(10): capacity() becomes 10", r.capacity(), 10);
-    chk<std::size_t>("reserve(10): size() unchanged", r.size(), 2);
-    chk<int>("reserve(10): r[0] preserved", r[0], 1);
-    chk<int>("reserve(10): r[1] preserved", r[1], 2);
+  std::cout << "After v4 = v2, is v4 an empty vector? " << std::boolalpha << v4.empty() << '\n';
 
-    // reserve() never shrinks capacity (1)
-    r.reserve(1);
-    chk<std::size_t>("reserve(1) < capacity(): capacity() unchanged", r.capacity(), 10);
+  MiniVector<int> v5(3);
+  v5[0] = 10;
+  v5[1] = 20;
+  v5[2] = 30;
+  v5.push_back(40);
 
-    // reserve() requesting less than the starting capacity is a no-op (1)
-    MiniVector s;
-    s.reserve(0);
-    chk<std::size_t>("reserve(0): capacity() unchanged (still 2)", s.capacity(), 2);
+  MiniVector<int> v6(1);
 
-    print_result("B");
-}
+  v6 = v5;
+  v6.push_back(999);
+  assert(v6.size() == v5.size() + 1);
+  assert(v6.capacity() == v5.capacity());
+  assert(v6[0] == 10);
+  assert(v6[1] == 20);
+  assert(v6[2] == 30);
 
-// ── Task C: Removal and checked access (15 tests) ───────────────────────────
-static void testTaskC() {
-    MiniVector v;
-    v.push_back(10);
-    v.push_back(20);
-    v.push_back(30);
+  v6[0] = 100;
 
-    chk<int>("at(1) valid index", v.at(1), 20);
-    chk_throws_out_of_range("at(3) == size(), out of range", [&]() { v.at(3); });
-    chk_throws_out_of_range("at(100) far out of range", [&]() { v.at(100); });
+  std::cout << v5[0] << '\n';  // 10
+  std::cout << v6[0] << '\n';  // 100
 
-    MiniVector empty;
-    chk_throws_out_of_range("at(0) on empty vector", [&]() { empty.at(0); });
+  v6 = v6;                     // self-assignment
+  std::cout << v6[0] << '\n';  // 100
 
-    const MiniVector cv(3);
-    chk<int>("const at(1)", cv.at(1), 0);
+  MiniVector<int> empty;
+  v6 = empty;
 
-    std::size_t capBefore = v.capacity();
-    v.pop_back();
-    chk<std::size_t>("pop_back: size() decreases by 1", v.size(), 2);
-    chk<std::size_t>("pop_back: capacity() unchanged", v.capacity(), capBefore);
-    chk<int>("pop_back: v[0] unchanged", v[0], 10);
-    chk<int>("pop_back: v[1] unchanged", v[1], 20);
+  std::cout << v6.empty() << '\n';     // true
+  std::cout << v6.size() << '\n';      // 0
+  std::cout << v6.capacity() << '\n';  // 2
 
-    // clear(): removes all elements without touching capacity (3)
-    MiniVector c;
-    c.push_back(1); c.push_back(2); c.push_back(3);
-    std::size_t capBeforeClear = c.capacity();
-    c.clear();
-    chk<std::size_t>("clear(): size() becomes 0", c.size(), 0);
-    chk<std::size_t>("clear(): capacity() unchanged", c.capacity(), capBeforeClear);
-    chk<bool>("clear(): empty() becomes true", c.empty(), true);
+  MiniVector<int> large(10);
+  large = v5;
 
-    // clear() on an already-empty vector is a safe no-op (1)
-    MiniVector d;
-    d.clear();
-    chk<bool>("clear() on empty vector: still empty()", d.empty(), true);
+  assert(large.size() == v5.size());
+  assert(large.capacity() == v5.capacity());
+  assert(large[0] == 10);
+  assert(large[1] == 20);
+  assert(large[2] == 30);
+  assert(large[3] == 40);
 
-    // Previously occupied storage can be reused correctly after clear() (2)
-    c.push_back(99);
-    chk<int>("clear() then push_back: c[0] reused", c[0], 99);
-    chk<std::size_t>("clear() then push_back: size() == 1", c.size(), 1);
+  const MiniVector<int> constVector(v5);
 
-    print_result("C");
-}
+  assert(constVector.size() == v5.size());
+  assert(!constVector.empty());
+  assert(constVector[0] == 10);
+  assert(constVector.at(1) == 20);
 
-// ── Task D: Rule of Three (29 tests) ────────────────────────────────────────
-static void testTaskD() {
-    MiniVector a;
-    a.push_back(10);
-    a.push_back(20);
-    a.push_back(30);
+  bool caught = false;
 
-    // Copy constructor: size, capacity, elements 0-2, allocated storage (6)
-    MiniVector b(a);
-    chk<std::size_t>("copy ctor: size()", b.size(), 3);
-    chk<std::size_t>("copy ctor: capacity()", b.capacity(), a.capacity());
-    chk<int>("copy ctor: b[0]", b[0], 10);
-    chk<int>("copy ctor: b[1]", b[1], 20);
-    chk<int>("copy ctor: b[2]", b[2], 30);
-    b.push_back(40);
-    chk<int>("copy ctor: allocated storage matches copied capacity", b[3], 40);
+  try {
+    v5.at(v5.size());
+  }
+  catch (const std::out_of_range&) {
+    caught = true;
+  }
 
-    // Copy-constructor independence, both directions (2)
-    b[0] = 999;
-    chk<int>("copy ctor: independence, a[0] unaffected", a[0], 10);
-    a[1] = 888;
-    chk<int>("copy ctor: independence, b[1] unaffected", b[1], 20);
-    a[1] = 20;  // restore for the assignment tests below
+  assert(caught);
 
-    // Assignment: size, capacity, elements 0-2, allocated storage (6)
-    MiniVector destination;
-    destination = a;
-    chk<std::size_t>("assign: size copied", destination.size(), 3);
-    chk<std::size_t>("assign: capacity copied", destination.capacity(), a.capacity());
-    chk<int>("assign: element 0 copied", destination[0], 10);
-    chk<int>("assign: element 1 copied", destination[1], 20);
-    chk<int>("assign: element 2 copied", destination[2], 30);
-    destination.push_back(40);
-    chk<int>("assignment: allocated storage matches copied capacity", destination[3], 40);
+  MiniVector<int> popTest;
+  popTest.push_back(10);
+  popTest.push_back(20);
 
-    // Assignment independence, both directions (2)
-    destination[1] = 999;
-    chk<int>("assign: deep-copy independence (dest -> source)", a[1], 20);
-    a[2] = 888;
-    chk<int>("assign: deep-copy independence (source -> dest)", destination[2], 30);
-    a[2] = 30;  // restore
+  std::size_t oldCapacity = popTest.capacity();
 
-    // Assignment into a larger destination: size, capacity, elements 0-2 (5)
-    MiniVector large;
-    for (int i = 0; i < 9; ++i) large.push_back(i);
-    large = a;
-    chk<std::size_t>("assign into larger destination: size()", large.size(), 3);
-    chk<std::size_t>("assign into larger destination: capacity()", large.capacity(), a.capacity());
-    chk<int>("assign into larger destination: large[0]", large[0], 10);
-    chk<int>("assign into larger destination: large[1]", large[1], 20);
-    chk<int>("assign into larger destination: large[2]", large[2], 30);
+  popTest.pop_back();
+  assert(popTest.size() == 1);
+  assert(popTest.capacity() == oldCapacity);
 
-    // Assigning an empty source with capacity 2 into a destination with
-    // capacity 10: empty, size, capacity actually replaced (3)
-    MiniVector fromEmptySource;
-    fromEmptySource.reserve(10);
-    fromEmptySource.push_back(1);
-    MiniVector emptySrc;
-    fromEmptySource = emptySrc;
-    chk<bool>("assign from empty: empty()", fromEmptySource.empty(), true);
-    chk<std::size_t>("assign from empty: size()", fromEmptySource.size(), 0);
-    chk<std::size_t>("assign from empty: capacity() == 2", fromEmptySource.capacity(), 2);
+  popTest.pop_back();
+  assert(popTest.empty());
+  assert(popTest.capacity() == oldCapacity);
 
-    // Self-assignment: size, capacity, elements unchanged (5)
-    MiniVector self;
-    self.push_back(10); self.push_back(20); self.push_back(30);
-    std::size_t selfCapBefore = self.capacity();
-    self = self;
-    chk<std::size_t>("self-assignment: size() unchanged", self.size(), 3);
-    chk<std::size_t>("self-assignment: capacity() unchanged", self.capacity(), selfCapBefore);
-    chk<int>("self-assignment: self[0] unchanged", self[0], 10);
-    chk<int>("self-assignment: self[1] unchanged", self[1], 20);
-    chk<int>("self-assignment: self[2] unchanged", self[2], 30);
+  MiniVector<double> decimals;
+  decimals.push_back(1.5);
+  decimals.push_back(2.75);
+  assert(decimals[0] == 1.5);
+  assert(decimals[1] == 2.75);
 
-    print_result("D");
-}
+  MiniVector<std::string> words;
+  words.push_back("tree");
+  words.push_back("string");
+  assert(words.size() == 2);
+  assert(words[0] == "tree");
+  assert(words[1] == "string");
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " [A|B|C|D]\n";
-        return 1;
-    }
-    const std::string task(argv[1]);
+  MiniVector<Rectangle> defaultRectangles(3);
 
-    if (task == "A") testTaskA();
-    else if (task == "B") testTaskB();
-    else if (task == "C") testTaskC();
-    else if (task == "D") testTaskD();
-    else {
-        std::cerr << "Task must be A, B, C, or D.\n";
-        return 1;
-    }
-    return 0;
+  assert(defaultRectangles.size() == 3);
+  assert(defaultRectangles.capacity() == 3);
+  assert(defaultRectangles[0].length() == 2.0);
+  assert(defaultRectangles[0].width() == 1.0);
+
+  MiniVector<Rectangle> rectangles;
+
+  rectangles.push_back(Rectangle(3.0, 4.0));
+  rectangles.push_back(Rectangle(5.0, 6.0));
+  rectangles.push_back(Rectangle(7.0, 8.0));
+
+  assert(rectangles.size() == 3);
+  assert(rectangles.capacity() == 4);
+  assert(rectangles[0].length() == 3.0);
+  assert(rectangles[1].width() == 6.0);
+  assert(rectangles.at(2).area() == 56.0);  // 7.0 * 8.0
+
+  MiniVector<Rectangle> rectangleCopy(rectangles);
+  rectangleCopy[0] = Rectangle(10.0, 2.0);
+
+  assert(rectangleCopy[0].length() == 10.0);
+  assert(rectangleCopy[0].width() == 2.0);
+  assert(rectangles[0].length() == 3.0);
+  assert(rectangles[0].width() == 4.0);
+
+  rectangleCopy.push_back(Rectangle(9.0, 10.0));
+
+  assert(rectangleCopy.size() == 4);
+  assert(rectangleCopy.capacity() == rectangles.capacity());
+  assert(rectangleCopy[3].length() == 9.0);
+  assert(rectangleCopy[3].width() == 10.0);
+
+  return 0;
 }
